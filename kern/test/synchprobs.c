@@ -255,7 +255,7 @@ whalemating(int nargs, char **args) {
 
 	kprintf_n("Starting sp1...\n");
 	kprintf_n("If this tests hangs, your solution is incorrect.\n");
-
+	
 	testlock = lock_create("testlock");
 	if (testlock == NULL) {
 		panic("sp1: lock_create failed\n");
@@ -276,7 +276,12 @@ whalemating(int nargs, char **args) {
 	test_status = TEST161_SUCCESS;
 	test_message = "";
 
+	kprintf_n("If this tests hangs, your solution is incorrect.\n");
+
 	whalemating_init();
+
+	kprintf_n("Hang.\n");
+
 
 	/* Start males and females only. */
 	for (i = 0; i < 2; i++) {

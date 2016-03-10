@@ -133,13 +133,13 @@ dowait(int nowait, int pid)
 
 	if (!nowait) {
 		if (waitpid(pid, &x, 0)<0) {
-			errx(1, "waitpid");
+			warn("waitpid");
 		}
 		else if (WIFSIGNALED(x)) {
-			errx(1, "pid %d: signal %d", pid, WTERMSIG(x));
+			warnx("pid %d: signal %d", pid, WTERMSIG(x));
 		}
 		else if (WEXITSTATUS(x) != 0) {
-			errx(1, "pid %d: exit %d", pid, WEXITSTATUS(x));
+			warnx("pid %d: exit %d", pid, WEXITSTATUS(x));
 		}
 	}
 }

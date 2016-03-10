@@ -44,7 +44,28 @@
  * Called by the driver during initialization.
  */
 
+
+ /* we will need 3 semaphores for the 3 actors and their respective counters*/
+struct semaphore *male_sem_e;
+struct semaphore *fem_sem_e;
+struct semaphore *mm_sem_e;
+
+struct semaphore *male_sem_l;
+struct semaphore *fem_sem_l;
+struct semaphore *mm_sem_l;
+
 void whalemating_init() {
+	 
+	 // mutex = lock_create("Mutex");
+	 
+	 male_sem_e = sem_create("Male Enter",0);
+	 fem_sem_e = sem_create("Female Enter",0);
+	 mm_sem_e = sem_create("Matchmaker Enter",0);
+
+	 male_sem_l = sem_create("Male Leave",0);
+	 fem_sem_l  = sem_create("Female Leave",0);
+	 mm_sem_l   = sem_create("Matchmaker Leave",0);
+
 	return;
 }
 
@@ -54,38 +75,59 @@ void whalemating_init() {
 
 void
 whalemating_cleanup() {
+
+	sem_destroy(male_sem_e);
+	sem_destroy(fem_sem_e);
+	sem_destroy(mm_sem_e);
+	sem_destroy(male_sem_l);
+	sem_destroy(fem_sem_l);
+	sem_destroy(mm_sem_l);
+
 	return;
 }
 
 void
 male(uint32_t index)
 {
-	(void)index;
-	/*
-	 * Implement this function by calling male_start and male_end when
-	 * appropriate.
-	 */
-	return;
+
+  male_start(index);
+
+  V(male_sem_e);
+  P(fem_sem_l);
+
+  male_end(index);
+  
+  return;
+	
 }
 
 void
 female(uint32_t index)
 {
-	(void)index;
-	/*
-	 * Implement this function by calling female_start and female_end when
-	 * appropriate.
-	 */
-	return;
+
+  female_start(index);
+
+  V(fem_sem_e);
+  P(male_sem_l);
+
+  female_end(index);
+ 
+  return;
 }
 
 void
 matchmaker(uint32_t index)
 {
-	(void)index;
-	/*
-	 * Implement this function by calling matchmaker_start and matchmaker_end
-	 * when appropriate.
-	 */
-	return;
+	matchmaker_start(index);
+
+	P(male_sem_e);
+	P(fem_sem_e);
+
+
+	V(male_sem_l);
+	V(fem_sem_l);
+	
+    matchmaker_end(index);
+  
+ return;
 }

@@ -83,6 +83,7 @@ TAGS_HEADERS=\
 # Default rule: link the kernel.
 all: includelinks .WAIT $(KERNEL)
 
+
 #
 # Here's how we link the kernel.
 #

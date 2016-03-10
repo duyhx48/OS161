@@ -48,7 +48,9 @@
 #include <current.h>
 #include <addrspace.h>
 #include <vnode.h>
-
+#include <vfs.h>
+#include <kern/fcntl.h>
+#include <synch.h>
 /*
  * The process for the kernel; this holds all the kernel-only threads.
  */
@@ -193,7 +195,12 @@ proc_bootstrap(void)
 struct proc *
 proc_create_runprogram(const char *name)
 {
-	struct proc *newproc;
+		struct proc *newproc;
+		struct vnode *v = NULL;
+
+
+	/* creating and initializing the three consoles */
+	    
 
 	newproc = proc_create(name);
 	if (newproc == NULL) {
@@ -203,6 +210,87 @@ proc_create_runprogram(const char *name)
 	/* VM fields */
 
 	newproc->p_addrspace = NULL;
+
+
+	struct fd *IN = NULL;
+        struct fd *OUT = NULL;
+        struct fd *ERR = NULL;
+
+        char*  fname = NULL;
+        int result;
+
+        // STDIN //
+
+        IN = (struct fd*)kmalloc(sizeof(struct fd));
+        
+        KASSERT(IN != NULL);
+
+        fname = kstrdup("con:");
+        result = vfs_open(fname, O_RDONLY, 0, &v);
+        
+        if (result) {
+                vfs_close(v);
+                return NULL;
+        }
+
+        IN->vn = v;
+        IN->offset = 0;
+        IN->flags = O_RDONLY;
+        IN->refcount = 0;
+        IN->lk = lock_create("stdin");
+
+        // STDOUT  //
+
+        OUT = (struct fd*)kmalloc(sizeof(struct fd));
+        
+        KASSERT(OUT != NULL);
+
+        fname = kstrdup("con:");
+        result = vfs_open(fname, O_WRONLY, 0, &v);
+        
+        if (result) {
+                vfs_close(v);
+                return NULL;
+        }
+
+        OUT->vn = v;
+        OUT->offset = 0;
+        OUT->flags = O_WRONLY;
+        OUT->refcount = 0;
+        OUT->lk = lock_create("stdout");
+
+
+		// STDERR  //
+
+		ERR = (struct fd*)kmalloc(sizeof(struct fd));
+        
+        KASSERT(ERR != NULL);
+
+        fname = kstrdup("con:");
+        result = vfs_open(fname, O_WRONLY, 0, &v);
+        
+        if (result) {
+                vfs_close(v);
+                return NULL;
+        }
+
+        ERR->vn = v;
+        ERR->offset = 0;
+        ERR->flags = O_WRONLY;
+        ERR->refcount = 0;
+        ERR->lk = lock_create("stderr");
+
+
+        /*
+        newproc->fd_table[0] = IN;
+		newproc->fd_table[1] = OUT;
+		newproc->fd_table[2] = ERR;
+		*/
+
+		curthread->t_proc->fd_table[0] = IN;
+		curthread->t_proc->fd_table[1] = OUT;
+		curthread->t_proc->fd_table[2] = ERR;
+		
 
 	/* VFS fields */
 

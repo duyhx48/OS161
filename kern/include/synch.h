@@ -34,6 +34,8 @@
  * Header file for synchronization primitives.
  */
 
+/* Max number of readers supported to read at a time, to avoid starvation */
+#define MAX_READERS 1000
 
 #include <spinlock.h>
 
@@ -74,6 +76,9 @@ void V(struct semaphore *);
  */
 struct lock {
         char *lk_name;
+        struct wchan *lk_wchan;
+        struct thread *lk_thread;
+        struct spinlock lk_spinlock;  
         // add what you need here
         // (don't forget to mark things volatile as needed)
 };
@@ -113,6 +118,8 @@ bool lock_do_i_hold(struct lock *);
 
 struct cv {
         char *cv_name;
+        struct wchan *cv_wchan;
+        struct spinlock sem_lock;      
         // add what you need here
         // (don't forget to mark things volatile as needed)
 };
@@ -147,10 +154,29 @@ void cv_broadcast(struct cv *cv, struct lock *lock);
  * (should be) made internally.
  */
 
+// struct rwlock {
+//         char *rwlock_name;
+        
+//         struct wchan *rq;
+//         struct wchan *wq; 
+
+//         struct lock* lshared;
+
+//         volatile unsigned r_count;
+//         volatile unsigned w_count;              
+// };
+
 struct rwlock {
-        char *rwlock_name;
-        // add what you need here
-        // (don't forget to mark things volatile as needed)
+        char* rwlock_name;
+                
+        // struct lock* lshared;
+        // struct semaphore* sem;
+
+        // volatile unsigned r_count;
+        // volatile unsigned w_count;              
+
+        struct semaphore* sem;
+        struct lock* lshared;        
 };
 
 struct rwlock * rwlock_create(const char *);

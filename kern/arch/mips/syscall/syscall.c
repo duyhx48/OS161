@@ -35,6 +35,11 @@
 #include <thread.h>
 #include <current.h>
 #include <syscall.h>
+#include <kern/file_syscall.h>
+// #include <kern/proc_syscall.h> 
+#include <copyinout.h>
+
+ int sys_fork(struct trapframe *tf, pid_t *retval);
 
 
 /*
@@ -80,6 +85,9 @@ syscall(struct trapframe *tf)
 {
 	int callno;
 	int32_t retval;
+	int64_t d_retval;
+	int32_t whence;
+
 	int err;
 
 	KASSERT(curthread != NULL);
@@ -100,6 +108,9 @@ syscall(struct trapframe *tf)
 	retval = 0;
 
 	switch (callno) {
+
+
+		/* Already exisiting for reference */	    
 	    case SYS_reboot:
 		err = sys_reboot(tf->tf_a0);
 		break;
@@ -109,14 +120,106 @@ syscall(struct trapframe *tf)
 				 (userptr_t)tf->tf_a1);
 		break;
 
-	    /* Add stuff here */
+		/* File-system  system calls dispatcher*/
+	    
+	    case SYS_read:
+
+	    // sys_read(int fd, void *buf, size_t buflen);	    
+		err = sys_read(tf->tf_a0, (userptr_t) tf->tf_a1 , (size_t) tf->tf_a2, &retval);
+	    
+	    break;
+
+	    case SYS_write:
+	    
+	    err = sys_write( tf->tf_a0 , (userptr_t) tf->tf_a1, (size_t) tf->tf_a2, &retval);
+
+	    break;
+
+
+	    case SYS_open:
+		
+		err = sys_open((userptr_t)tf->tf_a0 , tf->tf_a1, tf->tf_a2, &retval);	    
+
+	    break;
+
+
+	    case SYS_close:
+
+	    err = sys_close(tf->tf_a0);
+
+	    break;
+
+
+	    case SYS_lseek:
+	    //tf_a1 cannot be used since , off_t is 64-bit
+	    //use use a2,a3 to represent param2
+	    //we use a userspace address(tp->sp+16) to represent whence , that is checked for authernticity using copyin
+	    copyin((const_userptr_t) tf->tf_sp+16, &whence, sizeof(int32_t));
+	    err =  sys_lseek(tf->tf_a0,  (off_t)tf->tf_a2 << 32 | tf->tf_a3, whence, &d_retval);
+	    //getting values from d_retval (int64)
+	    retval = d_retval >> 32;
+
+	    break;
+
+	    case SYS_dup2:
+
+	    err = sys_dup2(tf->tf_a0, tf->tf_a1);
+
+	    break;
+
+	    case SYS_chdir:
+
+	    err = sys_chdir((userptr_t)tf->tf_a0);
+
+	    break;
+
+	    case SYS___getcwd:
+
+	    err = sys___getcwd((userptr_t)tf->tf_a0, tf->tf_a1, &retval);
+
+	    break;
+
+	    /* Process system calls dispatcher*/
+
+	    // case SYS_fork:
+
+	    // err = sys_fork(tf, &retval);
+
+	    // break;
+
+	 //    case SYS_execv:
+
+	 //    err = sys_execv((userptr_t)tf->tf_a0, (userptr_t) tf->tf_a1);
+
+	 //    break;
+
+	 //    case SYS__exit:
+	    
+	 //    sys__exit(tf->tf_a0);	    
+
+	 //    err = 0;	    
+
+	 //    break;
+
+	 //    case SYS_waitpid:
+
+		// err = sys_waitpid(tf->tf_a0, (userptr_t)tf->tf_a1, tf->tf_a2, &retval);
+
+	 //    break;
+
+	 //    case SYS_getpid:
+	    
+	 //    err = sys_getpid(&retval);
+
+	 //    break;
+
+	    
 
 	    default:
 		kprintf("Unknown syscall %d\n", callno);
 		err = ENOSYS;
-		break;
+		
 	}
-
 
 	if (err) {
 		/*
@@ -130,6 +233,7 @@ syscall(struct trapframe *tf)
 	else {
 		/* Success. */
 		tf->tf_v0 = retval;
+		tf->tf_v1 = d_retval;
 		tf->tf_a3 = 0;      /* signal no error */
 	}
 

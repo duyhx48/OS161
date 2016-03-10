@@ -819,17 +819,17 @@ kheap_printstats(void)
 	spinlock_release(&kmalloc_spinlock);
 }
 
-
 /*
- * Return the number of used bytes.
+ * Print number of used heap bytes.
  */
-
-unsigned long
-kheap_getused(void) {
+void
+kheap_printused(void)
+{
 	struct pageref *pr;
 	unsigned long total = 0;
+	char total_string[32];
 
-	/* compute with interrupts off */
+	/* print the whole thing with interrupts off */
 	spinlock_acquire(&kmalloc_spinlock);
 	for (pr = allbase; pr != NULL; pr = pr->next_all) {
 		total += subpage_stats(pr, true);
@@ -837,18 +837,7 @@ kheap_getused(void) {
 	total += coremap_used_bytes();
 	spinlock_release(&kmalloc_spinlock);
 
-	return total;
-}
-
-/*
- * Print number of used bytes.
- */
-
-void
-kheap_printused(void)
-{
-	char total_string[32];
-	snprintf(total_string, sizeof(total_string), "%lu", kheap_getused());
+	snprintf(total_string, sizeof(total_string), "%lu", total);
 	secprintf(SECRET, total_string, "khu");
 }
 

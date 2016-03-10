@@ -319,3 +319,4 @@ copyoutstr(const char *src, userptr_t userdest, size_t len, size_t *actual)
 	curthread->t_machdep.tm_badfaultfunc = NULL;
 	return result;
 }
+

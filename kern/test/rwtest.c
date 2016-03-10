@@ -62,6 +62,5 @@ int rwtest5(int nargs, char **args) {
 
 	kprintf_n("rwt5 unimplemented\n");
 	success(TEST161_FAIL, SECRET, "rwt5");
-
 	return 0;
 }

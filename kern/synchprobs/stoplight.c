@@ -73,8 +73,15 @@
  * Called by the driver during initialization.
  */
 
+struct lock* chain[4];
+
 void
 stoplight_init() {
+
+	for(int i =0; i<4; i++){
+		chain[i] =  lock_create("Lock");
+	}
+
 	return;
 }
 
@@ -83,36 +90,86 @@ stoplight_init() {
  */
 
 void stoplight_cleanup() {
+	for(int i =0; i<4; i++){
+		lock_destroy(chain[i]);
+	}
+
 	return;
 }
 
 void
 turnright(uint32_t direction, uint32_t index)
 {
-	(void)direction;
-	(void)index;
-	/*
-	 * Implement this function.
-	 */
+
+	lock_acquire(chain[direction]);
+
+	inQuadrant(direction, index);
+
+	leaveIntersection(index);
+	
+	lock_release(chain[direction]);
+
 	return;
 }
+
+
 void
 gostraight(uint32_t direction, uint32_t index)
 {
-	(void)direction;
-	(void)index;
-	/*
-	 * Implement this function.
-	 */
+
+	int a = direction;
+	int b = (direction+3)%4;
+
+	int max = a > b? a:b;
+	int min = a < b? a:b;
+
+
+	lock_acquire(chain[max]);
+	lock_acquire(chain[min]);
+
+	inQuadrant(a, index);
+	inQuadrant(b, index);
+
+	leaveIntersection(index);
+	
+	lock_release(chain[max]);
+	lock_release(chain[min]);
+	
 	return;
 }
 void
 turnleft(uint32_t direction, uint32_t index)
 {
-	(void)direction;
-	(void)index;
-	/*
-	 * Implement this function.
-	 */
+
+	int a[] = { direction, (direction+3)%4 , (direction+2)%4 };
+	int b[] = { direction, (direction+3)%4 , (direction+2)%4 };
+	
+	for(int i=0;i<2;i++){
+		for(int j=i+1;j<3;j++){
+			if(a[i] < a[j]){
+				a[i] = a[i] + a[j];
+				a[j] = a[i] - a[j];
+				a[i] = a[i] - a[j];
+			}
+		}
+	}
+
+	lock_acquire(chain[a[0]]);
+	lock_acquire(chain[a[1]]);
+	lock_acquire(chain[a[2]]);
+
+
+	inQuadrant(b[0], index);
+
+	inQuadrant(b[1], index);
+
+	inQuadrant(b[2], index);
+
+	leaveIntersection(index);
+	
+	lock_release(chain[a[0]]);
+	lock_release(chain[a[1]]);
+	lock_release(chain[a[2]]);
+	
 	return;
 }

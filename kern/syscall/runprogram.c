@@ -45,6 +45,8 @@
 #include <syscall.h>
 #include <test.h>
 
+
+
 /*
  * Load program "progname" and start running it in usermode.
  * Does not return except on error.
@@ -98,12 +100,16 @@ runprogram(char *progname)
 	}
 
 	/* Warp to user mode. */
-	enter_new_process(0 /*argc*/, NULL /*userspace addr of argv*/,
-			  NULL /*userspace addr of environment*/,
-			  stackptr, entrypoint);
+	enter_new_process(   0    /*argc*/,
+						 NULL /*userspace addr of argv*/,
+			             NULL /*userspace addr of environment*/,
+			             stackptr,
+			             entrypoint
+			          );
 
 	/* enter_new_process does not return. */
 	panic("enter_new_process returned\n");
+
 	return EINVAL;
 }
 
