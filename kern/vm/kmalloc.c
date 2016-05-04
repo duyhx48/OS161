@@ -827,14 +827,27 @@ kheap_printused(void)
 {
 	struct pageref *pr;
 	unsigned long total = 0;
+<<<<<<< HEAD
 	char total_string[32];
+=======
+	unsigned int num_pages = 0, coremap_bytes = 0;
+>>>>>>> 160b83330ef0215827c53cf655bfdb8a4e1480ea
 
 	/* print the whole thing with interrupts off */
 	spinlock_acquire(&kmalloc_spinlock);
 	for (pr = allbase; pr != NULL; pr = pr->next_all) {
 		total += subpage_stats(pr, true);
+		num_pages++;
 	}
-	total += coremap_used_bytes();
+
+	coremap_bytes = coremap_used_bytes();
+
+	// Don't double-count the pages we're using for subpage allocation;
+	// we've already accounted for the used portion.
+	if (coremap_bytes > 0) {
+		total += coremap_bytes - (num_pages * PAGE_SIZE);
+	}
+
 	spinlock_release(&kmalloc_spinlock);
 
 	snprintf(total_string, sizeof(total_string), "%lu", total);

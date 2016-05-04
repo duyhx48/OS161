@@ -117,6 +117,7 @@ common_prog(int nargs, char **args)
 {
 	struct proc *proc;
 	int result;
+	unsigned tc;
 
 	//semaphore ...int cont
 	struct semaphore *con = sem_create("Console",0);
@@ -128,8 +129,13 @@ common_prog(int nargs, char **args)
 		return ENOMEM;
 	}
 
+<<<<<<< HEAD
 
 	
+=======
+	tc = thread_count;
+
+>>>>>>> 160b83330ef0215827c53cf655bfdb8a4e1480ea
 	result = thread_fork(args[0] /* thread name */,
 			proc /* new process */,
 			cmd_progthread /* thread function */,
@@ -153,6 +159,10 @@ common_prog(int nargs, char **args)
 	 * The new process will be destroyed when the program exits...
 	 * once you write the code for handling that.
 	 */
+
+	// Wait for all threads to finish cleanup, otherwise khu be a bit behind,
+	// especially once swapping is enabled.
+	thread_wait_for_count(tc);
 
 	return 0;
 }
@@ -496,6 +506,7 @@ static const char *testmenu[] = {
 	"[km2] kmalloc stress test           ",
 	"[km3] Large kmalloc test            ",
 	"[km4] Multipage kmalloc test        ",
+	"[km5] kmalloc coremap alloc test    ",
 	"[tt1] Thread test 1                 ",
 	"[tt2] Thread test 2                 ",
 	"[tt3] Thread test 3                 ",
@@ -641,6 +652,7 @@ static struct {
 	{ "km2",	kmallocstress },
 	{ "km3",	kmalloctest3 },
 	{ "km4",	kmalloctest4 },
+	{ "km5",	kmalloctest5 },
 #if OPT_NET
 	{ "net",	nettest },
 #endif
